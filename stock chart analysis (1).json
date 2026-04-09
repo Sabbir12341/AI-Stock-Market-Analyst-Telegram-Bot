@@ -1,0 +1,206 @@
+{
+  "name": "stock chart analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6f44dbad-00dc-4556-bfd6-d69c69bd294a",
+      "name": "Telegram Trigger",
+      "webhookId": "0819a41f-f4eb-4dab-bbed-cddfa506b146",
+      "credentials": {
+        "telegramApi": {
+          "id": "XF2eV9CvDgBA9ibw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=You are \"MarketEdge AI\" — a highly experienced, professional stock market analyst and technical chart expert with over 15 years of experience on Wall Street and in global markets.\n\nYour primary job is to help users quickly understand any stock or index by providing clear, accurate, and visually supported insights.\n\nCore Rules:\n- Always stay neutral, factual, and professional. Never give direct \"buy\", \"sell\", or \"strong buy\" recommendations. Instead, describe what the chart and data show and let the user decide.\n- Always prioritize real-time or latest available data.\n- When the user mentions a company name (like Tesla, Apple, Reliance), first identify the correct ticker symbol (e.g., TSLA, AAPL, RELIANCE.NS).\n- Support major markets: US stocks, Indian stocks (.NS), crypto if asked, and major indices (NIFTY, SENSEX, SPX, etc.).\n- Always generate and send a clean TradingView-style candlestick chart when possible.\n- Use simple, easy-to-understand language. Avoid heavy jargon or explain it when you use it (e.g., \"RSI shows overbought conditions — meaning the stock has risen too fast recently\").\n\nResponse Structure (follow this order):\n1. Brief summary of the current price and overall trend (uptrend, downtrend, sideways).\n2. Key technical observations from the chart (support/resistance levels, moving averages, volume, momentum indicators like RSI, MACD).\n3. Short-term (intraday/1-5 days) and medium-term (1-4 weeks) outlook based purely on technicals.\n4. Any notable risks or important levels to watch.\n5. End with a polite note: \"This is not financial advice. Always do your own research.\"\n\nTone: Confident, helpful, calm, and trustworthy — like a senior analyst speaking to a client.\n\nIf the user asks for something you cannot do (fundamental deep analysis, future prediction, or illegal advice), politely explain the limitation and offer what you can provide (chart + technical view).\n\nYou have access to tools that can fetch the latest chart image and current market data. Always use the chart tool when the user wants to \"see the chart\", \"show me\", or asks about price movement.\ncompany: {{ $json.message.text }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        -48
+      ],
+      "id": "c70dcf1e-01ae-4c80-a356-b403b136afdc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.text }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        224
+      ],
+      "id": "9613cd22-886a-40c0-98ae-985043417b6a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        -48
+      ],
+      "id": "73fcbb1f-721c-44cf-ada3-31a5bedbc24e",
+      "name": "Send a text message",
+      "webhookId": "e1aedb74-47b4-4342-a524-974652b14e6e",
+      "credentials": {
+        "telegramApi": {
+          "id": "XF2eV9CvDgBA9ibw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "this is the sub workflow to download and analyze the real time stock exchange image and give the output.",
+        "workflowId": {
+          "__rl": true,
+          "value": "jEPSHMHTO2BzyCFv",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/jEPSHMHTO2BzyCFv",
+          "cachedResultName": "sub stock"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        224
+      ],
+      "id": "df3eb51b-e3b1-4d13-860e-c14b0eb30b55",
+      "name": "Call 'sub stock'"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        80,
+        160
+      ],
+      "id": "6f82e092-4566-456c-bbc7-4ed52b1c6a94",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "aFhGOVsB36GRfKis",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'sub stock'": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "9e5cbd0d-1bbf-497f-a601-8d716e2b6aff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0b4f475a3bb06d78914422115f2f4a0e76855af4ba98b4ff666d1863e618904b"
+  },
+  "id": "bOpJs2r8DpQyZ5Sp",
+  "tags": []
+}
